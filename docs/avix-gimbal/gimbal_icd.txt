@@ -1,0 +1,2910 @@
+           GIMBAL CONTROL
+
+                           MODULE
+
+                     Interface Control Document V1.12
+
+
+
+
+                              2026 年 1 月 28 日
+                             AVIX TECHNOLOGY INC
+No. 143, Sec. 3, Yongping Rd., Taiping Dist., Taichung City 411004, Taiwan (R.O.C.)
+
+                                         1
+Document Revision History
+ Version               Modification Details             Author       Date
+
+
+  V1.0     Initial release                             Skye Tsai   2025.2.20
+
+
+  V1.1     Corrected Status packet format              Skye Tsai   2025.3.21
+
+
+  V1.2     Corrected parts of packet format            Skye Tsai   2025.3.31
+
+
+  V1.3     Added CGI commands                          Skye Tsai   2025.6.17
+
+
+  V1.4     Added UAV Status Return packet              Skye Tsai    2025.7.8
+
+
+  V1.5     Added CGI commands; adjusted Ch4            Skye Tsai   2025.8.19
+
+
+           protocol format
+
+
+  V1.6     Add Sections 1.3.9, 1.3.10, and 1.3.11 to   Skye Tsai   2025.8.20
+
+
+           the agreement
+
+
+  V1.7     Add Ch.3 MAVLink Operating Command          Skye Tsai   2025.10.17
+
+
+  V1.8     Add Section 1.3.13 and 1.3.14 to the        Skye Tsai   2025.11.13
+
+
+           agreement
+
+
+  V1.9     Add Section 2.1.1 & 2.1.2 to the            Skye Tsai   2025.11.26
+
+
+           agreement
+
+
+  V1.10    Update Section 2.1.15.                      Skye Tsai    2026.1.2
+
+
+           Insert Section 2.1.8.
+
+
+  V1.11    Insert Section 1.3.1.                       Skye Tsai   2026.1.28
+
+
+                                       2
+V1.12   Update Section 1.1       Skye Tsai   2026.2.25
+
+
+
+
+                             3
+Contents
+Document Revision History ......................................................................................................... 2
+
+
+Contents ........................................................................................................................................ 4
+
+
+   1.       Gimbal Control Description ............................................................................................. 7
+
+
+        1.1.       Communication Protocol Format ...................................................................................... 8
+
+
+        1.1.1. Protocol Packet Examples .................................................................................................... 9
+
+
+        1.2.       Device ID Definition ............................................................................................................. 10
+
+
+        1.3.       Message Data Definition .................................................................................................... 11
+
+
+        1.3.1. Message Response............................................................................................................... 11
+
+
+        1.3.2. Follow Random Head .......................................................................................................... 12
+
+
+        1.3.3. Control Gimbal Velocity ..................................................................................................... 13
+
+
+        1.3.4. Transfer to Specify Angle ................................................................................................... 14
+
+
+        1.3.5. Camera Control ..................................................................................................................... 15
+
+
+        1.3.6. Camera Capture .................................................................................................................... 17
+
+
+        1.3.7. Thermal Control .................................................................................................................... 18
+
+
+        1.3.8. Distance Measurement ....................................................................................................... 19
+
+
+        1.3.9. UAV Status Return................................................................................................................ 20
+
+
+
+                                                                           4
+     1.3.10. Get Control IP ........................................................................................................................ 22
+
+
+     1.3.11. Return / Change Control IP................................................................................................ 23
+
+
+     1.3.12. Change Control IP Response ............................................................................................. 24
+
+
+     1.3.13. Gimbal Status Return .......................................................................................................... 25
+
+
+     1.3.14. Gimbal Version Return ........................................................................................................ 27
+
+
+     1.3.15. Get Gimbal Version .............................................................................................................. 29
+
+
+     1.4.        Checksum Calculation ......................................................................................................... 30
+
+
+     1.4.1. C++ Example ......................................................................................................................... 30
+
+
+     1.4.2. Python Example .................................................................................................................... 30
+
+
+2.       Camera Control Description........................................................................................... 31
+
+
+     2.1.        Message Data Definition .................................................................................................... 32
+
+
+     2.1.1. SetPTZ ...................................................................................................................................... 32
+
+
+     2.1.2. SetThermal ............................................................................................................................. 34
+
+
+     2.1.3. GetAdjust ................................................................................................................................ 35
+
+
+     2.1.4. SetAdjust ................................................................................................................................. 37
+
+
+     2.1.5. GetNetwork ............................................................................................................................ 39
+
+
+     2.1.6. SetNetwork ............................................................................................................................ 41
+
+
+                                                                            5
+     2.1.7. GetMultimedia ...................................................................................................................... 42
+
+
+     2.1.8. GetImage ................................................................................................................................ 44
+
+
+     2.1.9. SetMultimedia ....................................................................................................................... 46
+
+
+     2.1.10. GetPlayBack ........................................................................................................................... 48
+
+
+     2.1.11. GetSRTList............................................................................................................................... 50
+
+
+     2.1.12. GetTime ................................................................................................................................... 51
+
+
+     2.1.13. SetTime.................................................................................................................................... 53
+
+
+     2.1.14. SetAI（This function is only supported on certain gimbals.） ................................ 55
+
+
+     2.1.15. SetTracking（This function is only supported on certain gimbals.） .................... 56
+
+
+     2.1.16. GetDetection（This function is only supported on certain gimbals.） ................. 58
+
+
+     2.2.        AI Object Name Parameter Table .................................................................................... 60
+
+
+     2.3.        CGI Parameter-to-Value Table ......................................................................................... 61
+
+
+3.       Flight Controller Protocol Control Description ............................................................ 64
+
+
+     3.1.        Communication Protocol Format .................................................................................... 65
+
+
+     3.2.        Message Data Definition .................................................................................................... 66
+
+
+     3.2.1. HEARTBEAT ............................................................................................................................ 66
+
+
+     3.2.2. ATTITUDE ................................................................................................................................ 67
+
+
+                                                                           6
+       3.2.3. GLOBAL_POSITION_INT...................................................................................................... 68
+
+
+       3.3.       Checksum Calculation ......................................................................................................... 70
+
+
+       3.3.1. C++ Example ......................................................................................................................... 70
+
+
+       3.3.2. Python Example .................................................................................................................... 71
+
+
+  4.       SBUS Protocol Control Description ............................................................................... 73
+
+
+       4.1.       Communication Protocol Format .................................................................................... 74
+
+
+       4.2.       Communication Protocol Example .................................................................................. 75
+
+
+
+
+1. Gimbal Control Description
+   This protocol is intended to define the communication protocol between a Personal
+
+
+Computer (PC) and the Gimbal. The relevant settings and precautions are as follows：
+
+
+   ⚫          Data Format：Little-Endian.
+
+
+   ⚫          Network Transmission：TCP / UDP packets, Hand-Shaking required between
+
+
+              both parties if using TCP.
+
+
+   ⚫          Network Address: IP address is 192.168.144.200.
+
+
+   ⚫          Network Port: Both TCP and Using are using Port 2000 to used for data
+
+
+              exchange or control commands between the PC and the Gimbal.
+
+
+
+
+                                                                          7
+1.1.     Communication Protocol Format
+
+       Address      Data Name           Data Type               Description
+
+
+         0-1         Header[2]        Unsigned char             0xAB, 0xCD
+
+
+         2        Protocol Version    Unsigned char           Protocol version
+
+
+                                                         Refer to Section 1.2 Device
+         3        From Device ID      Unsigned char
+                                                                ID Definition
+
+
+                                                         Refer to Section 1.2 Device
+         4         To Device ID       Unsigned char
+                                                                ID Definition
+
+
+         5           Sequence         Unsigned char      Packet sequence number
+
+
+         6            Length          Unsigned char           Length of Data
+
+
+         7          Message ID        Unsigned char            Command ID
+
+
+                                     Refer to Section
+                                                        Refer to Section 1.3 Message
+  8~ (8+Length)    Data[Length]      1.3 Message Data
+                                                              Data Definition
+                                        Definition
+
+
+  (8+Length)+1      Checksum          Unsigned char           Sum of all bytes
+
+
+
+
+                                       8
+1.1.1. Protocol Packet Examples
+
+Commanding the payload to start video recording:
+
+
+  Example packet as follows:
+
+
+
+
+Commanding the payload to follow the aircraft heading:
+
+
+  Example packet as follows:
+
+
+
+
+Receiving the current status from the gimbal:
+
+
+  Example packet as follows:
+
+
+
+
+                                                9
+1.2.   Device ID Definition
+
+                    ID        Corresponding Device
+
+
+                   0x01              Gimbal
+
+
+                   0xA0               PC
+
+
+
+
+                                10
+1.3.         Message Data Definition
+
+1.3.1.       Message Response
+
+Value Definition: 0x01
+
+
+Function Description: Returns the current message ID received from the client.
+
+
+Application Scenario: Used to acknowledge and echo the message ID back to the client,
+
+
+allowing the client to confirm that the packet was successfully transmitted.
+
+
+Transmitting Device: Gimbal
+
+
+Receiving Device: PC
+
+
+Transmission Timing: Sent as required
+
+
+
+   Address             Data Name          Data Type                   Description
+
+
+                                                         Refer to Section 1.3 Message Data
+         0             Message ID             Char
+                                                         Definition
+
+
+
+
+                                              11
+1.3.2.       Follow Random Head
+
+Value Definition: 0x31
+
+
+Function Description: Sets the gimbal heading to align with the aircraft nose.
+
+
+Application Scenario:
+
+
+  When set to 1, the gimbal heading will always follow the aircraft nose.
+
+
+  When set to 0, the gimbal will not follow the aircraft nose.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required
+
+
+
+   Address              Data Name          Data Type                 Description
+
+
+                                                          0: Do not follow aircraft nose
+         0           Follow Mode              Char
+                                                          1: Always follow aircraft nose
+
+
+
+
+                                               12
+1.3.3.       Control Gimbal Velocity
+
+Value Definition: 0x32
+
+
+Function Description: Controls the rotation of the gimbal.
+
+
+Application Scenario: Used in velocity mode to control gimbal rotation.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required
+
+
+Data Format:
+
+
+
+   Address             Data Name          Data Type                 Description
+
+
+     0~3            Yaw Axis Velocity        Float      Range: -100 ~ 100 degrees/sec
+
+
+     4~7            Pitch Axis Velocity      Float      Range: -100 ~ 100 degrees/sec
+
+                                                                          Follow
+         8             Setting Flags         Char       Bit 0
+                                                                          aircraft   1 = enable
+                                                                           nose
+
+                                                        Bit 1 ~ 7     Reserved
+
+
+
+
+                                              13
+1.3.4.       Transfer to Specify Angle
+
+Value Definition: 0x33
+
+
+Function Description: Controls the rotation of the gimbal.
+
+
+Application Scenario: Used in angle mode to control gimbal rotation.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required
+
+
+Data Format:
+
+
+
+   Address              Data Name         Data Type                Description
+
+
+     0~3              Yaw Axis Angle         Float      Unit：-180 ~ 180 degrees
+
+
+     4~7             Pitch Axis Angle        Float      Unit：-90 ~ 90 degrees
+
+                                                                   Enable yaw
+         8             Setting Flags         Char       Bit 0                     1 = enable
+                                                                         axis
+                                                                  Enable pitch
+                                                        Bit 1                     1 = enable
+                                                                         axis
+                                                                        Follow
+                                                        Bit 2                     1 = enable
+                                                                  aircraft nose
+
+                                                        Bit 3~7        Reserved
+
+
+
+
+                                              14
+1.3.5.   Camera Control
+
+Value Definition: 0x3A
+
+
+Function Description: Controls the gimbal camera.
+
+
+Application Scenario: Controls zoom, focus, and recording switch of the visible-light camera
+
+
+within the gimbal.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required
+
+
+
+
+                                             15
+Data Format:
+
+
+
+   Address       Data Name        Data Type             Description
+
+                                              0：Zoom control
+
+      0        Mode Selection       Char      1：Focus control
+
+                                              2：Recording switch
+
+                                              0：Stop zoom
+
+      1         Zoom Control        Char      1：Zoom in
+
+                                              2：Zoom out
+
+                                              0：Stop focus
+
+                                              1：Focus far
+      2         Focus Control       Char
+                                              2：Focus near
+
+                                              3：Single auto focus
+
+                                              0：Stop recording
+      3        Recording Switch     Char
+                                              1：Start recording
+
+
+
+
+                                     16
+1.3.6.   Camera Capture
+
+Value Definition: 0x3B
+
+
+Function Description: Controls the gimbal camera to take a photo.
+
+
+Application Scenario: Commands the gimbal camera to capture a single image.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required Data Format:
+
+
+
+   Address           Data Name           Data Type                  Description
+
+
+
+
+                                             17
+1.3.7.       Thermal Control
+
+Value Definition: 0x3C
+
+
+Function Description: Controls the gimbal thermal imaging camera.
+
+
+Application Scenario: Controls zoom, focus, and palette adjustment of the thermal imaging
+
+
+camera within the gimbal.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as requiredData Format:
+
+
+
+   Address             Data Name         Data Type                    Description
+
+                                                       0: Zoom control
+         0           Mode Selection         Char       1: Focus control
+
+                                                       2: Palette adjustment
+
+                                                       0: Stop zoom
+
+         1            Zoom Control          Char       1: Zoom in
+
+                                                       2: Zoom out
+
+                                                       0: Stop focus
+
+         2            Focus Control         Char       1: Focus +
+
+                                                       2: Focus -
+
+                                                       1: White Hot
+
+                                                       2: Black Hot
+
+         3          Palette Adjustment      Char       3: Rainbow
+
+                                                       4: Iron Red
+
+                                                       5: Lava
+                                            18
+1.3.8.       Distance Measurement
+
+Value Definition: 0x50
+
+
+Function Description: Controls the gimbal distance measurement function.
+
+
+Application Scenario: Enables or disables the gimbal distance measurement function.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Sent as required
+
+
+Data Format:
+
+
+
+   Address            Data Name          Data Type                Description
+
+
+                         Distance
+                                                       0: Disable distance measurement
+         0           Measurement           Char
+                                                       1: Enable distance measurement
+                          Switch
+
+
+
+
+                                            19
+1.3.9.    UAV Status Return
+
+Value Definition: 0x60
+
+
+Function Description: Transmits the current UAV status to the gimbal.
+
+
+Application Scenario: When UART communication with the flight controller is unavailable, this
+
+
+command continuously sends UAV information such as GPS coordinates, heading angle, and
+
+
+other flight data to the gimbal.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Continuous transmission at 10 Hz
+
+
+Data Format:
+
+
+
+   Address            Data Name          Data Type                   Description
+
+
+     0~3            UAV Longitude          Float      Unit: 1e-7 degrees
+
+
+     4~7             UAV Latitude          Float      Unit: 1e-7 degrees
+
+
+    8 ~ 11           Altitude (MSL)        Float      Unit: meters
+
+
+    12 ~ 15          UAV Heading           Float      Unit: degrees, Range: 0 ~ 360
+
+
+    16 ~ 19        Horizontal Speed        Float      Unit: meters/second
+
+
+    20 ~ 23       Distance to Home         Int32      Unit: meters
+
+
+    24 ~ 27         Battery Voltage        Float      Unit: volts
+
+
+         28         Satellite Count        UInt8      Unit: count
+
+                                             20
+29   Reserved   Uint8   Default: 1
+
+
+
+
+                 21
+1.3.10. Get Control IP
+
+Value Definition: 0xC0
+
+
+Function Description: Retrieve the network location of the PTZ (pan-tilt-zoom) controller.
+
+
+Application Scenario: Using the UDP protocol, send to 255.255.255.255:2000 to obtain the
+
+
+PTZ control IP address, subnet mask, default gateway, and related information. The response
+
+
+shall follow the format specified in Section 1.3.10.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: PTZ Controller
+
+
+Transmission Timing: Send as needed
+
+
+Data Format:
+
+
+
+   Address             Data Name           Data Type                Description
+
+
+
+
+                                                22
+1.3.11. Return / Change Control IP
+
+Value Definition: 0xC1
+
+
+Function Description: Modify the network location of the PTZ (pan-tilt-zoom) controller.
+
+
+Application Scenario: Modify the PTZ control IP address, subnet mask, default gateway, and
+
+
+related information. The response shall follow the format specified in Section 1.3.11.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: PTZ Controller
+
+
+Transmission Timing: Send as needed
+
+
+Data Format:
+
+
+
+   Address            Data Name           Data Type                  Description
+
+
+     0~3                 IP Address          Char       Range：0.0.0.0 ~ 255.255.255.255
+
+
+     4~7             Subnet Mask             Char       Range：0.0.0.0 ~ 255.255.255.255
+
+
+    8 ~ 11         Default Gateway           Char       Range：0.0.0.0 ~ 255.255.255.255
+
+
+
+
+                                               23
+1.3.12. Change Control IP Response
+
+Value Definition: 0xC2
+
+
+Function Description: Indicate successful modification of the PTZ (pan-tilt-zoom) controller
+
+
+network location.
+
+
+Application Scenario: Return confirmation of the successfully updated PTZ control IP address,
+
+
+subnet mask, default gateway, and related information.
+
+
+Transmitting Device: PTZ Controller
+
+
+Receiving Device: PC
+
+
+Transmission Timing: Send as needed
+
+
+Data Format:
+
+
+
+   Address             Data Name         Data Type                  Description
+
+
+
+
+                                              24
+1.3.13. Gimbal Status Return
+
+Value Definition: 0xF0
+
+
+Function Description: Return the current status of the PTZ (pan-tilt-zoom) controller.
+
+
+Application Scenario: Continuously report the current PTZ angles, zoom level, as well as IMU
+
+
+calibration and ranging results.
+
+
+Transmitting Device: PTZ Controller
+
+
+Receiving Device: PC
+
+
+Transmission Timing: Continuous transmission (frequency: 10 Hz)
+
+
+Data Format:
+
+
+
+   Address             Data Name          Data Type                 Description
+
+                                                                    Unit: degrees
+     0~3            Roll Axis Angle          Float
+                                                                  Range: -90 ~ 90°
+
+                                                                    Unit: degrees
+     4~7           Pitch Axis Angle          Float
+                                                                  Range: -90 ~ 90°
+
+                                                                    Unit: degrees
+    8 ~ 11          Yaw Axis Angle           Float
+                                                                 Range: -180 ~ 180°
+
+                       Visible Light
+    12 ~ 13                                 Int16                    Unit: 0.1×
+                       Zoom Level
+
+
+                   Thermal Imaging
+    14 ~ 15                                 Int16                    Unit: 0.1×
+                       Zoom Level
+
+
+
+                                              25
+16 ~ 19   Target Distance    Float                  Unit: meters
+
+
+20 ~ 23    Target Altitude   Float                  Unit: meters
+
+
+24 ~ 27   Target Longitude   Int32               Unit: 1e-7 degrees
+
+
+28 ~ 31   Target Latitude    Int32               Unit: 1e-7 degrees
+
+
+          Data Reception
+  32                         Char                     Unit: Hz
+             Frequency
+
+                                                      IMU
+                                       Bit 0
+                                                   Calibration
+                                                   Pitch Axis
+                                       Bit 1
+                                                     Status
+                                                                 True if normal
+                                                    Roll Axis
+                                       Bit 2
+                                                     Status
+                                                    Yaw Axis
+                                       Bit 3
+                                                     Status
+  33         Data Flag       Char
+                                                                 0：Free Mode
+                                       Bit 4       PTZ Mode      1：Follow
+                                                                 Aircraft Nose
+                                                                 0：No Ranging
+                                                    Ranging
+                                       Bit 5                     1：Successful
+                                                     Result
+                                                                 Ranged
+
+                                     Bit 6 ~ 7     Reserved
+
+
+
+
+                              26
+1.3.14. Gimbal Version Return
+
+Value Definition: 0xF1
+
+
+Function Description: Return the version of current gimbal.
+
+
+Application Scenario: When Get ACK Command (0xF2), Return the firmware version, gimbal
+
+
+model, and gimbal SN number of current gimbal.
+
+
+Transmitting Device: PTZ Controller.
+
+
+Receiving Device: PC
+
+
+Transmission Timing: Send as needed
+
+
+Data Format:
+
+
+
+   Address             Data Name         Data Type                 Description
+
+
+                                                       Example: 0b0000_0001
+                                          Unsigned
+       0           Firmware Version                    First 4 Bits：Minor Version
+                                            char
+                                                       Last 4 Bits：Major Version
+
+
+                                                       Example：251001
+
+
+                                                       25：Build Year
+     1~4            Firmware Patch           int
+                                                       10：Build Month
+
+
+                                                       01：Build Date
+
+
+                       Gimbal Model
+    5 ~ 20                                Char[16]     Example: KTG_TT3002
+                          Type
+
+
+                                              27
+                      Unsigned
+21 ~ 22   Gimbal SN              Range: 0 ~ 65535
+                       short
+
+
+
+
+                         28
+1.3.15. Get Gimbal Version
+
+Value Definition: 0xF2
+
+
+Function Description: Ack firmware version of current gimbal.
+
+
+Application Scenario: To Get Gimbal Firmware Version, SN Number, And Gimbal Type.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: PTZ Controller.
+
+
+Transmission Timing: Send as needed
+
+
+Data Format:
+
+
+
+   Address           Data Name           Data Type              Description
+
+
+
+
+                                             29
+1.4.     Checksum Calculation
+
+The checksum for the current gimbal control protocol is calculated using a simple
+
+
+summation method. Example implementations are as follows：
+
+
+1.4.1.   C++ Example
+
+ unsigned char crc = 0;
+ for (unsigned char i = 0; i < length; i++)
+ {
+     crc += buffer[i];
+ }
+ return crc;
+
+
+
+
+1.4.2.   Python Example
+
+ def calculate_crc(buffer):
+     crc = 0
+     for b in buffer:
+         crc = (crc + b) & 0xFF
+     return crc
+
+
+
+
+                                          30
+2. Camera Control Description
+    This protocol defines the communication between a Personal Computer (PC) and the
+
+
+camera within the gimbal. The relevant settings and precautions are as follows：
+
+
+   ⚫    Data Type: Plain text string.
+
+
+   ⚫    Network Transmission: CGI (sent via HTTP).
+
+
+   ⚫    Network Address: IP address 192.168.144.108.
+
+
+   ⚫    Network Port: Port 80, used for data exchange or control commands between
+
+
+        the PC and the camera.
+
+
+   ⚫    Authentication: Not required if absent; otherwise, Basic Auth is used.
+
+
+
+
+                                             31
+2.1. Message Data Definition
+
+2.1.1.    SetPTZ
+
+Function Description: Control The visible camera zoom, focus, and focus mode.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+
+ Parameter                      Value Range                   Parameter Description
+
+
+ Zoom_Ratio                     1 ~ 42                        Visible Zoom Directly.
+
+
+                                                              Zoom / Focus Speed.
+ PTZSpeed                       1~9
+                                                              1 is slow, 9 is fast.
+
+
+                                                              0: normal AF mode.
+ AF_Mode                        0~1
+                                                              1: auto-focus after zoom.
+
+
+                                                              0: Auto
+
+
+ FocusMode                      0~2                           1: Manual
+
+
+                                                              2: Push AF
+
+
+                                ZoomStop: Stop Continuous Zoom.
+ Dir
+                                ZoomIn: Continuous Zoom-In.
+
+                                              32
+                             ZoomOut: Continuous Zoom-Out.
+
+
+                             FocusStop: Stop Continuous Focus.
+
+
+                             FocusFar: Continuous Focus-Far.
+
+
+                             FocusNear: Continuous Focus-Near.
+
+
+Sent Message：
+
+
+http://192.168.144.108/SetPTZ.cgi?Dir=ZoomIn
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                          33
+2.1.2.      SetThermal
+
+Function Description: Control The thermal camera zoom and change thermal colorpalette.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+
+ Parameter                      Value Range                 Parameter Description
+
+
+                                                            1: Rainbow
+
+
+                                                            2: Whitehot
+
+
+ colorpalette                   1~5                         3: Blackhot
+
+
+                                                            4: Ironbow
+
+
+                                                            5: Lava
+
+
+ zoom_ratio                     1 ~ 16                      Thermal Zoom Directly
+
+
+Sent Message：
+
+
+http://192.168.144.108/SetThermal.cgi?zoom_tratio=2
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                              34
+2.1.3.      GetAdjust
+
+Function Description: Retrieves the current image quality settings of the camera.
+
+
+Application Scenario: Used to obtain settings such as brightness, contrast, saturation, hue,
+
+
+and other image parameters.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                       Value Range                     Parameter Description
+
+
+ Brightness                      0~31                            Image brightness
+
+
+ Contrast                        0~31                            Image contrast
+
+
+ Hue                             0~31                            Hue / phase
+
+
+ Saturation                      0~31                            Image saturation
+
+
+ Shutter                         0~24                            Shutter time (exposure time)
+
+
+                                 0：Disable
+ AntiFog                                                         Anti-fog switch
+                                 1：Enable
+
+
+ AntiFog_level                   0~12                            Anti-fog level
+
+
+ i_BLC                           0~3                             Backlight compensation
+
+
+                                               35
+ Denoise_3D                    0~9                             3D digital noise reduction
+
+
+ Denoise_2D                    0~9                             2D digital noise reduction
+
+
+                               6,8,10,12,14,16,20,24,32,40,4
+ AGC                                                           Automatic gain control
+                               8,56,64,72,80,88,96
+
+
+                               0: Color mode
+ DayNight_Day                                                  Day/Night switch
+                               2: B/W mode
+
+
+                               0: Disable                      Digital image stabilization
+ dis
+                               1: Enable                       (EIS)
+
+
+Sent Message：
+
+
+http://192.168.144.108:80/GetAdjust.cgi
+
+
+Returned Message：
+
+
+Brightness=16<br>Contrast=16<br>Hue=16<br>Saturation=16<br>Sharpness=0<br>Anti
+
+
+Fog=0<br>i_BLC=0<br>Denoise_3D=0<br>Denoise_2D=0<br>DayNight_Day=0<br>dis=
+
+
+0
+
+
+
+
+                                             36
+2.1.4.      SetAdjust
+
+Function Description: Sets the current image quality settings of the camera.
+
+
+Application Scenario: Configures camera parameters such as brightness, contrast, saturation,
+
+
+hue, and other image settings.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Data Format:
+
+
+ Parameter                       Value Range                    Parameter Description
+
+
+ Brightness                      0~31                           Image brightness
+
+
+ Contrast                        0~31                           Image contrast
+
+
+ Hue                             0~31                           Hue / phase
+
+
+ Saturation                      0~31                           Image saturation
+
+
+ Shutter                         0~24                           Shutter time (exposure time)
+
+
+                                 0：Disable
+ AntiFog                                                        Anti-fog switch
+                                 1：Enable
+
+
+ AntiFog_level                   0~12                           Anti-fog level
+
+
+ i_BLC                           0~3                            Backlight compensation
+
+
+                                               37
+ Denoise_3D                  0~9                            3D digital noise reduction
+
+
+ Denoise_2D                  0~9                            2D digital noise reduction
+
+
+ AGC                         6~96                           Automatic gain control
+
+
+                             0: Color mode
+ DayNight_Day                                               Day/Night switch
+                             2: B/W mode
+
+
+                             0: Disable                     Digital image stabilization
+ dis
+                             1: Enable                      (EIS)
+
+
+Sent Message：
+
+
+http://192.168.144.108/SetAdjust.cgi?Brightness=18&Hue=14
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                           38
+2.1.5.     GetNetwork
+
+Function Description: Retrieves the current network configuration of the camera.
+
+
+Application Scenario: Obtains camera settings such as IP address, subnet mask, default
+
+
+gateway, and other network parameters.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                      Value Range                    Parameter Description
+
+
+ Ipaddr                         0.0.0.0 ~ 255.255.255.255      IP Address
+
+
+ Netmask                        0.0.0.0 ~ 255.255.255.255      Subnet Mask
+
+
+ Gateway                        0.0.0.0 ~ 255.255.255.255      Default Gateway
+
+
+ Dns1                           0.0.0.0 ~ 255.255.255.255      Primary DNS
+
+
+ Dns2                           0.0.0.0 ~ 255.255.255.255      Secondary DNS
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/GetNetwork.cgi
+
+
+Returned Message：
+
+
+
+
+                                              39
+Ipaddr=192.168.144.108<br>Netmask=255.255.255.0<br>Gateway=192.168.144.1<br>Dns
+
+
+1=8.8.8.8<br>Dns2=168.95.1.1
+
+
+
+
+                                      40
+2.1.6.      SetNetwork
+
+Function Description: Sets the current network configuration of the camera.
+
+
+Application Scenario: Configures camera settings such as IP address, subnet mask, default
+
+
+gateway, and other network parameters.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Data Format:
+
+
+ Parameter                      Value Range                    Parameter Description
+
+
+ Ipaddr                         0.0.0.0 ~ 255.255.255.255      IP Address
+
+
+ Netmask                        0.0.0.0 ~ 255.255.255.255      Subnet Mask
+
+
+ Gateway                        0.0.0.0 ~ 255.255.255.255      Default Gateway
+
+
+ Dns1                           0.0.0.0 ~ 255.255.255.255      Primary DNS
+
+
+ Dns2                           0.0.0.0 ~ 255.255.255.255      Secondary DNS
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/SetNetwork.cgi?Ipaddr=192.168.2.60&Gateway=192.168.2.1
+
+
+Returned Message：
+
+
+200 is OK
+
+
+                                              41
+2.1.7.     GetMultimedia
+
+Function Description: Retrieves the current image quality settings of the camera.
+
+
+Application Scenario: Obtains camera parameters such as resolution, frame rate, compression
+
+
+ratio, and other image settings.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                         Value Range                  Parameter Description
+
+                                   3840x2160
+                                   2560x1440
+ Resolution                        1920x1080                    Image Resolution
+                                   1280x720
+                                   640×480
+
+ Fps                               5 ~ 30                       Frame Rate
+
+
+ Bitrate                           256 ~ 4000                   Compression Ratio
+
+
+                                   h265
+ Mode                                                           Video/Streaming Format
+                                   h264
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/GetMultimedia.cgi?CH={CH}
+
+                                                 42
+Parameter                 Value Range                      Parameter Description
+
+                          0: EO Main → EO Main (Visible-
+                          light Recording)
+                          1: EO Sub 1 →        EO Sub 1
+                          (Visible-light Downlink 1)
+CH                                                         Video Channel
+                          2: EO Sub 2 →        EO Sub 2
+                          (Visible-light Downlink 2)
+                          3: IR Main → IR Main (Thermal
+                          Imaging Recording & Downlink)
+
+Returned Message：
+
+
+Resolution=1920x1080<br>Fps=30<br>Bitrate=4000<br>Mode=h265
+
+
+
+
+                                         43
+2.1.8.    GetImage
+
+Function Description: Get the current snapshot by the camera.
+
+
+Application Scenario: Get the current camera snapshot (EO / IR，Hint：The function can’t
+
+
+save the Image to SD card).
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Data Format:
+
+
+ Parameter                     Value Range                      Parameter Description
+
+                               0: EO Main → EO Main (Visible-
+                               light Recording)
+                               1: EO Sub 1 →        EO Sub 1
+                               (Visible-light Downlink 1)
+ CH                                                             Video Channel
+                               2: EO Sub 2 →        EO Sub 2
+                               (Visible-light Downlink 2)
+                               3: IR Main → IR Main (Thermal
+                               Imaging Recording & Downlink)
+
+                               3840x2160                        Image Resolution
+                               2560x1440
+ Resolution                    1920x1080                        (Hint ： Only 640x480 &
+                               1280x720
+                               640×480                          640x360 If CH=3)
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/SetMultimedia.cgi?CH=1&Fps=15&Bitrate=1024
+
+
+                                              44
+Returned Message：
+
+
+The current snapshot of the camera.
+
+
+
+
+                                      45
+2.1.9.     SetMultimedia
+
+Function Description: Sets the current image quality settings of the camera.
+
+
+Application Scenario: Configures camera parameters such as resolution, frame rate,
+
+
+compression ratio, and other image settings.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Data Format:
+
+
+ Parameter                      Value Range                      Parameter Description
+
+                                0: EO Main → EO Main (Visible-
+                                light Recording)
+                                1: EO Sub 1 →        EO Sub 1
+                                (Visible-light Downlink 1)
+ CH                                                              Video Channel
+                                2: EO Sub 2 →        EO Sub 2
+                                (Visible-light Downlink 2)
+                                3: IR Main → IR Main (Thermal
+                                Imaging Recording & Downlink)
+                                3840x2160
+                                2560x1440
+ Resolution                     1920x1080                        Image Resolution
+                                1280x720
+                                640×480
+
+ Fps                            5 ~ 30                           Frame Rate
+
+
+ Bitrate                        256 ~ 4000                       Compression Ratio
+
+
+ Mode                           h265                             Video/Streaming Format
+
+                                               46
+                            h264
+
+
+Transmission Example1：
+
+
+http://192.168.144.108:80/SetMultimedia.cgi?CH=1&Fps=15&Bitrate=1024
+
+
+Returned Message：
+
+
+200 is OK
+
+
+Transmission Example2：
+
+
+http://192.168.144.108:80/SetMultimedia.cgi?CH=2&Mode=h264
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                        47
+2.1.10.   GetPlayBack
+
+Function Description: Retrieves the current recorded video or captured photo stored in the
+
+
+camera.
+
+
+Application Scenario: Obtains specific video recordings or photo files stored in the camera.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Transmission Example 1:
+
+
+http://192.168.144.108:80/GetPlayBack.cgi?Time=20250617
+
+
+ Parameter                      Value Range                     Parameter Description
+
+
+ Time                           19970101 ~ 20380119             Date
+
+
+Returned Message：
+
+avi/20250617/TEST_123_Thermal_20250617144636.jpg<br>
+
+avi/20250617/TEST_123_Thermal_20250617144637.jpg<br>
+
+avi/20250617/TEST_123_Thermal_20250617144638.jpg<br>
+
+avi/20250617/TEST_123_Thermal_20250617144639.jpg<br>
+
+avi/20250617/TEST_123_Thermal_20250617144640.jpg<br>
+
+avi/20250617/TEST_123_Vision_20250617144636.jpg<br>
+
+avi/20250617/TEST_123_Vision_20250617144637.jpg<br>
+
+avi/20250617/TEST_123_Vision_20250617144638.jpg<br>
+
+
+                                              48
+avi/20250617/TEST_123_Vision_20250617144639.jpg<br>
+
+avi/20250617/TEST_123_Vision_20250617144640.jpg<br>
+
+avi/20250617/TEST_123_Thermal_20250617093623.mp4<br>
+
+avi/20250617/TEST_123_Thermal_20250617093755.mp4<br>
+
+avi/20250617/TEST_123_Thermal_20250617093927.mp4<br>
+
+avi/20250617/TEST_123_Vision_20250617093623.mp4<br>
+
+avi/20250617/TEST_123_Vision_20250617093755.mp4<br>
+
+avi/20250617/TEST_123_Vision_20250617093927.mp4<br>
+
+
+Transmission Example 2：
+
+
+http://192.168.144.108:80/GetPlayBack.cgi?List=20250617_090000r
+
+
+ Parameter                    Value Range                     Parameter Description
+
+
+                              19970101 ~ 20380119
+ List                                                         Date + Time
+                              000000 ~ 235959
+
+
+Returned Message：
+
+avi/20250617/090000r/TEST_123_Thermal_20250617093623.mp4<br>
+
+avi/20250617/090000r/TEST_123_Thermal_20250617093755.mp4<br>
+
+avi/20250617/090000r/TEST_123_Thermal_20250617093927.mp4<br>
+
+avi/20250617/090000r/TEST_123_Vision_20250617093623.mp4<br>
+
+avi/20250617/090000r/TEST_123_Vision_20250617093755.mp4<br>
+
+avi/20250617/090000r/TEST_123_Vision_20250617093927.mp4<br>
+
+
+
+
+                                            49
+2.1.11.   GetSRTList
+
+Function Description: Retrieves the current SRT subtitle files used for video recording in the
+
+
+camera.
+
+
+Application Scenario: Obtains SRT subtitle files containing information such as gimbal PTZ
+
+
+angles, GPS data, and other relevant metadata.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Transmission Example:
+
+
+http://192.168.144.108:80/GetSRTList.cgi?List=20250617_090000r
+
+
+ Parameter                       Value Range                     Parameter Description
+
+
+                                 19970101 ~ 20380119
+ List                                                            Date + Time
+                                 000000 ~ 235959
+
+
+Returned Message：
+
+avi/srt/20250617/090000r/TEST_123_Thermal_20250617093623.srt<br>
+
+avi/srt/20250617/090000r/TEST_123_Thermal_20250617093755.srt<br>
+
+avi/srt/20250617/090000r/TEST_123_Thermal_20250617093927.srt<br>
+
+avi/srt/20250617/090000r/TEST_123_Thermal_20250617094059.srt<br>
+
+
+
+
+                                               50
+2.1.12.   GetTime
+
+Function Description: Retrieves the current time from the camera.
+
+
+Application Scenario: Obtains information from the internal clock of the camera.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                      Value Range                    Parameter Description
+
+
+                                +720,+660,+600,+540,+480,
+
+
+                                +420,+360,+300,+240,+210,
+
+
+                                +180,+120,+60,-0,-60,-120,
+                                                               Time zone (unit: hours ×
+ TimeZone                       -180,-210,-240,-270,-300,
+                                                               minutes, e.g., GMT+8 = -480)
+                                -330,-345,-360,-390,-420,
+
+
+                                -480,-540,-570,-600,-660,
+
+
+                                -720,-780
+
+
+                                0: Disable                     Enable or disable NTP time
+ UseNtp
+                                1: Enable                      synchronization
+
+
+ Ntp_Updata                     0~172800                       NTP Update Time
+
+
+                                              51
+                                                        Format: Seconds
+
+
+ NtpIP                        0.0.0.0~255.255.255.255   IP address of the NTP server
+
+
+                                                        Date and Time to Be
+
+
+                                                        Changed
+ Localtime                    0 ~ 4294967295.123
+                                                        (Unit: Unix standard
+
+
+                                                        timestamp)
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/GetTime.cgi
+
+
+Returned Message：
+
+
+TimeZone=-480<br>UseNtp=0<br>NtpIP=198.123.30.132<br>Localtime=1747846406
+
+
+
+
+                                          52
+2.1.13.   SetTime
+
+Function Description: Sets the current time in the camera.
+
+
+Application Scenario: Adjusts and configures the internal clock of the camera.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: Admin
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/SetTime.cgi?TimeZone=480&UseNtp=0&Localtime=1747846406
+
+
+ Parameter                      Value Range                    Parameter Description
+
+
+                                +720,+660,+600,+540,+480,
+
+
+                                +420,+360,+300,+240,+210,
+
+
+                                +180,+120,+60,-0,-60,-120,     Time Zone
+
+
+ TimeZone                       -180,-210,-240,-270,-300,      (Unit: hours × minutes, e.g.,
+
+
+                                -330,-345,-360,-390,-420,      GMT+8 = -480)
+
+
+                                -480,-540,-570,-600,-660,
+
+
+                                -720,-780
+
+
+                                0: Disable                     Use NTP for time
+ UseNtp
+                                1: Enable                      synchronization
+
+
+
+                                              53
+                                              NTP Update Time
+ Ntp_Updata         0~172800
+                                              Format: Seconds
+
+
+ NtpIP              0.0.0.0~255.255.255.255   NTP Server IP Address
+
+
+                                              Date and Time to Be
+
+
+                                              Changed
+ Localtime          0 ~ 4294967295.123
+                                              (Unit: Unix standard
+
+
+                                              timestamp)
+
+
+Returned Message：
+
+200 is OK
+
+
+
+
+                                54
+2.1.14.     SetAI（This function is only supported on certain gimbals.）
+
+Function Description: Configures AI recognition and tracking functions.
+
+
+Application Scenario: Enables or disables AI recognition and tracking functions within the
+
+
+camera.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                      Value Range                    Parameter Description
+
+
+                                1: Enable                      Enable/Disable AI
+ Trigger
+                                0: Disable                     Recognition
+
+
+Transmission Example：
+
+
+http://192.168.144.108:80/SetAI.cgi?Trigger=1
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                              55
+2.1.15.      SetTracking（This function is only supported on certain gimbals.）
+
+Function Description: Sets the target object for the camera to track.
+
+
+Application Scenario: Uses an ID code to specify the object the camera should track.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                      Value Range                     Parameter Description
+
+
+                                -1：Stop tracking
+ ID                                                             Target ID
+                                1 ~ 65535：Target ID to track
+
+
+ enable                         0：Stop tracking
+
+                                                                Top-Left X Coordinate For
+ target_x1                      0~8191
+                                                                Manual Tracking
+                                                                Top-Left Y Coordinate
+ target_y1                      0~8191
+                                                                Manual Tracking
+                                                                Bottom-Right X Coordinate
+ target_x2                      0~8191
+                                                                Manual Tracking
+                                                                Bottom-Right Y Coordinate
+ target_y2                      0~8191
+                                                                Manual Tracking
+
+Transmission Example For AI Tracking：
+
+
+http://192.168.144.108:80/SetTracking.cgi?ID=1
+
+
+Returned Message：
+
+
+                                              56
+200 is OK
+
+
+Transmission Example For Start Manual Tracking：
+
+
+http://192.168.144.108:80/SetTracking.cgi?target_x1=0&target_y1=0&target_x2=2000&targ
+
+
+et_y2=2000
+
+
+Returned Message：
+
+
+200 is OK
+
+
+Transmission Example For Stop Manual Tracking：
+
+
+http://192.168.144.108:80/SetTracking.cgi?enable=0
+
+
+Returned Message：
+
+
+200 is OK
+
+
+
+
+                                           57
+2.1.16.   GetDetection（This function is only supported on certain gimbals.）
+
+Function Description: Retrieves the image position of the currently tracked object by the
+
+
+camera.
+
+
+Application Scenario: Obtains the image position of the object currently being tracked by the
+
+
+camera, allowing bounding box operations on the ground station.
+
+
+Transmitting Device: PC
+
+
+Receiving Device: Camera
+
+
+Transmission Timing: Sent as required, approximately 10 Hz
+
+
+Transmission Permission: None
+
+
+Data Format:
+
+
+ Parameter                       Value Range                   Parameter Description
+
+
+ ID                              1 ~ 65535                     Detection ID
+
+
+ Type                            1 ~ 99                        Object Class (see Section 2.2)
+
+
+ x1                              0~8191                        Top-Left X Coordinate
+
+
+ y1                              0~8191                        Top-Left Y Coordinate
+
+
+ x2                              0~8191                        Bottom-Right X Coordinate
+
+
+ y2                              0~8191                        Bottom-Right Y Coordinate
+
+
+Note: Uses a normalized coordinate system with the top-left corner of the image as the
+
+
+origin. All coordinate values range from [0, 8191].
+
+
+                                               58
+Transmission Example：
+
+
+http://192.168.1.50/GetDetection.cgi
+
+
+Returned Message：
+
+
+ID=1,Type=1,x1=100,y1=100,x2=200,y2=200<br>ID=2,Type=1,x1=200,y1=200,x2=300,y2=
+
+
+300<br>ID=3,Type=2,x1=300,y1=300,x2=400,y2=400
+
+
+
+
+                                       59
+2.2. AI Object Name Parameter Table
+
+                    Code   Tracked Object
+                    0      Person
+                    1      Bicycle
+                    2      Car
+                    3      Motorcycle
+                    7      Truck
+                    99     Tracking (Tracking)
+
+
+
+
+                                 60
+2.3. CGI Parameter-to-Value Table
+
+ Image Quality
+                                        Parameter Overview
+  Parameters
+
+
+                 -4(0-3),-3(4-7),-2(8-11),-1(12-15),
+
+
+  Brightness     0(16-19),1(20-23),2(24-27),
+
+
+                 3(28-29),4(30-31)
+
+
+                 -4(0-3),-3(4-7),-2(8-11),-1(12-15),
+
+
+   Contrast      0(16-19),1(20-23),2(24-27),
+
+
+                 3(28-29),4(30-31)
+
+
+                 -4(0-3),-3(4-7),-2(8-11),-1(12-15),
+
+
+     Hue         0(16-19),1(20-23),2(24-27),
+
+
+                 3(28-29),4(30-31)
+
+
+                 -4(0-3),-3(4-7),-2(8-11),-1(12-15),
+
+
+  Saturation     0(16-19),1(20-23),2(24-27),
+
+
+                 3(28-29),4(30-31)
+
+
+                 Outdoor(0-0),Indoor(1-1),1/1(12-12),1/30(2-2),1/50(3-3),1/60(4-
+
+
+                 4),1/100(5-5),1/125(6-6),1/180(13-13),1/250(7-7),1/350(14-
+    Shutter
+                 14),1/400(20-20),1/450(21-21),1/500(8-8),1/550(22-22),1/600(23-
+
+                 23),1/650(24-24),1/700(15-15),1/1000(9-9),1/2000(16-
+
+                                         61
+                16),1/4000(17-17),1/5000(10-10),1/6000(18-18),1/8000(19-
+
+
+                19),1/10000(11-11)
+
+
+  AntiFog       Enable(1-1),Disable(0-0)
+
+
+                0(60-60),1(70-70),2(80-80),3(90-90),
+
+
+                4(100-100),5(110-110),6(120-120),7(130-130),
+AntiFog_level
+                8(140-140),9(150-150),10(160-160),
+
+
+                11(170-170),12(180-180)
+
+
+   i_BLC        Off(0-0),Weak(1-1),Middle(2-2),Strong(3-3)
+
+
+                Off(0-0),1(1-1),2(2-2),3(3-3),4(4-4),5(5-5),6(6-6),7(7-7),8(8-8),9(9-
+ Denoise_3D
+                9)
+
+
+                Off(0-0),1(1-1),2(2-2),3(3-3),4(4-4),5(5-5),6(6-6),7(7-7),8(8-8),9(9-
+ Denoise_2D
+                9)
+
+
+                6(6x),8(8x),10(10x),12(12x),14(14x),16(16x),20(20x),24(24x),32(32x),
+    AGC
+                40(40x),48(48x),56(56x),64(64x),72(72x),80(80x),88(88x),96(96x)
+
+
+                0: Sunny
+
+
+ModeSelector    3: Cloudy
+
+
+                4: Haze
+
+
+                0: Color
+DayNight_Day
+                2: Black & White
+
+
+                                         62
+      0: Off
+dis
+      1: On
+
+
+
+
+               63
+3. Flight Controller Protocol Control Description
+   This protocol defines the communication between the Flight Controller (FC) and the
+
+
+Gimbal. The relevant settings and precautions are as follows：
+
+
+   ⚫    Data Type: MAVLink 2 packet
+
+
+   ⚫    Transmission Method: UART (Universal Asynchronous Receiver Transmitter,
+
+
+        asynchronous serial communication)
+
+
+   ⚫    Transmission Rate: 115200 bps
+
+
+   ⚫    Transmission Settings: 8 data bits, no parity, 1 stop bit
+
+
+
+
+                                             64
+3.1. Communication Protocol Format
+
+    Address            Data Name               Data Type               Description
+
+
+       0           Header                  Unsigned char      0xFD
+
+
+       1           Length                  Unsigned char      Length of Data
+
+
+       2           Incompatibility Flags   Unsigned char      Always 0.
+
+
+       3           Compatibility Flags     Unsigned char      Always 0.
+
+
+       4           Sequence                Unsigned char      Packet Sequence Number
+
+
+       5           System ID               Unsigned char      System ID: Default is 1
+
+
+       6           Component ID            Unsigned char      Component ID: Default is 154
+
+
+      7~9          Message ID              Unsigned int       Message ID
+
+
+ 10~ (10+Length)   Data[Length]            Refer to Section   Refer to Section 3.2 & 3.3
+
+
+                                           3.2 Message Data   Message Data Definition
+
+
+                                           Definition
+
+
+(10+Length)+1 ~    Checksum                Unsigned short     CRC-16/MCRF4XX for the
+
+
+ (10+Length)+2                                                message (excluding Header),
+
+
+                                                              including CRC_EXTRA byte
+
+
+
+
+                                              65
+3.2. Message Data Definition
+
+3.2.1.       HEARTBEAT
+
+Value Definition: 0
+
+
+Function Description: Provides the heartbeat information from the gimbal.
+
+
+Application Scenario: This messages shows let flight controller knows gimbal exists.
+
+
+Transmitting Device: Gimbal
+
+
+Receiving Device: FC
+
+
+Transmission Timing: Continuous transmission at 1 Hz
+
+
+Data Format:
+
+
+
+   Address             Data Name          Data Type                      Description
+
+
+         0            custom_mode        unsigned int    Reversed.
+
+
+                                                         Vehicle or component type. For
+         1                 type          unsigned char
+                                                         gimbal, its always 26.
+
+                                                         Autopilot type / class. For gimbal, its
+         2               autopilot       unsigned char
+                                                         always 0.
+
+                                                         System mode bitmap. For gimbal,
+         3              base_mode        unsigned char
+                                                         its always 0.
+
+                                                         System status flag. For gimbal, its
+         4            system_status      unsigned char
+                                                         always 4.
+
+         5            mavlink_version    unsigned char   MAVLink version.
+
+
+
+
+                                             66
+3.2.2.       ATTITUDE
+
+Value Definition: 30
+
+
+Function Description: Provides the attitude information from the flight controller.
+
+
+Application Scenario: Allows determination of the current aircraft attitude, including roll,
+
+
+pitch, yaw, and other related angles.
+
+
+Transmitting Device: FC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Continuous transmission at 20 Hz
+
+
+Data Format:
+
+
+
+   Address              Data Name          Data Type                   Description
+
+                                                          System Time Since FC Startup (unit:
+         0              time_boot_ms      unsigned int
+                                                          ms)
+
+         1                  roll              float       Aircraft Roll Angle (unit: rad)
+
+
+         2                  pitch             float       Aircraft Pitch Angle (unit: rad)
+
+
+         3                  yaw               float       Aircraft Yaw Angle (unit: rad)
+
+
+         4                rollspeed           float       Aircraft Roll Rate (unit: rad/s)
+
+
+         5               pitchspeed           float       Aircraft Pitch Rate (unit: rad/s)
+
+
+         6               yawspeed             float       Aircraft Yaw Rate (unit: rad/s)
+
+
+
+
+                                               67
+3.2.3.       GLOBAL_POSITION_INT
+
+Value Definition: 33
+
+
+Function Description: Provides GPS information from the flight controller.
+
+
+Application Scenario: Allows determination of the current aircraft location, including GPS
+
+
+latitude, longitude, altitude above sea level, and other position information.
+
+
+Transmitting Device: FC
+
+
+Receiving Device: Gimbal
+
+
+Transmission Timing: Continuous transmission at 10 Hz
+
+
+Data Format:
+
+
+
+   Address             Data Name           Data Type                   Description
+
+                                                          System Time Since FC Startup (unit:
+         0             time_boot_ms       unsigned int
+                                                          ms)
+
+         1                  lat                int        Latitude (unit: degE7)
+
+         2                  lon                int        Longitude (unit: degE7)
+
+         3                  lat                int        Altitude Above Sea Level (unit: mm)
+
+                                                          Altitude Relative to Takeoff Point
+         4              relative_alt           int
+                                                          (unit: mm)
+
+                                                          Velocity Along Latitude Axis (North
+         5                  vx                short
+                                                          Positive, unit: cm/s)
+
+                                                          Velocity Along Longitude Axis (East
+         6                  vy                short
+                                                          Positive, unit: cm/s)
+                                               68
+                     Velocity Along Altitude Axis (Down
+7   vz     short
+                     Positive, unit: cm/s)
+
+          unsigned
+                     Vehicle    Heading      Angle   (unit:
+8   hdg
+           short     degrees)
+
+
+
+
+            69
+3.3. Checksum Calculation
+
+The checksum for this protocol is calculated as follows：
+
+
+3.3.1.   C++ Example
+
+ #define MAV_MSGID_HEARTBEAT             0
+ #define MAV_MSGID_ATTITUDE              30
+ #define MAV_MSGID_GLOBAL_POSITION_INT   33
+
+
+ #define MAV_MSGID_HEARTBEAT_EXTRA_CRC               50
+ #define MAV_MSGID_ATTITUDE_EXTRA_CRC              39
+ #define MAV_MSGID_GLOBAL_POSITION_INT_EXTRA_CRC     104
+
+
+ unsigned char GetExtraCRC(unsigned int msg_id)
+ {
+     switch (msg_id)
+     {
+          case MAV_MSGID_HEARTBEAT:
+              return MAV_MSGID_HEARTBEAT_EXTRA_CRC;
+          case MAV_MSGID_ATTITUDE:
+              return MAV_MSGID_ATTITUDE_EXTRA_CRC;
+          case MAV_MSGID_GLOBAL_POSITION_INT:
+              return MAV_MSGID_GLOBAL_POSITION_INT_EXTRA_CRC;
+          default:
+              return 0; // Unknown Message ID
+     }
+ }
+ // Accumulate CRC (official MAVLink implementation)
+ void crc_accumulate(unsigned char data, unsigned short * crcAccum)
+ {
+     unsigned char tmp = 0;
+
+
+     tmp = data ^ (unsigned char)(*crcAccum & 0xFF);
+     tmp ^= (tmp << 4);
+     *crcAccum = (*crcAccum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4);
+
+
+                                              70
+ }
+
+
+
+
+ // Initialize CRC
+ void crc_init(unsigned short *crcAccum)
+ {
+     *crcAccum = X25_INIT_CRC;
+ }
+
+
+ // Compute MAVLink V1 CRC (Header + Payload + CRC_EXTRA)
+ unsigned short MavCalcCRC(const unsigned char* buffer,unsigned char length, unsigned
+ char crc_extra)
+ {
+     unsigned short crc = 0;
+     crc_init(&crc);
+
+
+     // Process message excluding magic byte (start from buffer[1])
+     for (unsigned short i = 1; i < length; i++)
+     {
+         crc_accumulate(buffer[i], &crc);
+     }
+
+
+     // Append CRC_EXTRA (message-specific byte)
+     crc_accumulate(crc_extra, &crc);
+
+
+     return crc;
+ }
+
+
+
+
+3.3.2.   Python Example
+
+ # Message IDs
+ MAV_MSGID_HEARTBEAT = 0
+ MAV_MSGID_ATTITUDE = 30
+ MAV_MSGID_GLOBAL_POSITION_INT = 33
+
+
+ # CRC_EXTRA values
+                                            71
+MAV_MSGID_HEARTBEAT_EXTRA_CRC = 50
+MAV_MSGID_ATTITUDE_EXTRA_CRC = 39
+MAV_MSGID_GLOBAL_POSITION_INT_EXTRA_CRC = 104
+
+
+def get_extra_crc(msg_id):
+   if msg_id == MAV_MSGID_HEARTBEAT:
+       return MAV_MSGID_HEARTBEAT_EXTRA_CRC
+   elif msg_id == MAV_MSGID_ATTITUDE:
+       return MAV_MSGID_ATTITUDE_EXTRA_CRC
+   elif msg_id == MAV_MSGID_GLOBAL_POSITION_INT:
+       return MAV_MSGID_GLOBAL_POSITION_INT_EXTRA_CRC
+   return 0
+
+
+def crc_accumulate(data, crcAccum):
+   tmp = data ^ (crcAccum & 0xFF)
+   tmp ^= (tmp << 4) & 0xFF
+   crcAccum = ((crcAccum >> 8) ^
+                ((tmp << 8) & 0xFFFF) ^
+                ((tmp << 3) & 0xFFFF) ^
+                ((tmp >> 4) & 0xFFFF))
+   return crcAccum & 0xFFFF
+
+
+def mavlink_crc(buffer, crc_extra):
+   crc = X25_INIT_CRC
+   # Skip First Byte (Heading / magic)
+   for b in buffer[1:]:
+       # 確保 b 為 0..255
+       crc = crc_accumulate(b & 0xFF, crc)
+   # Append CRC_EXTRA
+   crc = crc_accumulate(crc_extra & 0xFF, crc)
+   return crc
+
+
+
+
+                                          72
+4. SBUS Protocol Control Description
+   This protocol defines the communication between the RC Controller (RC) and the Gimbal.
+
+
+The relevant settings and precautions are as follows：
+
+
+   ⚫    Data Type: SBUS packet
+
+
+   ⚫    Transmission Method: UART (Universal Asynchronous Receiver Transmitter,
+
+
+        asynchronous serial communication)
+
+
+   ⚫    Transmission Rate: 100000 bps
+
+
+   ⚫    Transmission Settings: 9 data bits, even parity, 2 stop bits
+
+
+   ⚫    Transmission Frequency: 100 Hz
+
+
+
+
+                                             73
+4.1. Communication Protocol Format
+
+   Address      Data Name      Data Type              Description
+
+
+     0       Header         Unsigned char   0x0F
+
+
+    1~22     Channel Data   Unsigned char   16 channels, 11 bits per
+
+
+                                            channel
+
+
+     23      Flag           Unsigned char   7~4             Default
+
+
+                                                            value: 0x00
+
+
+                                            3               Failsafe
+
+
+                                            2               Frame_Lost
+
+
+                                            1               Channel 17
+
+
+                                            0               Channel 18
+
+
+     24      Footer         Unsigned char   0x00
+
+
+
+
+                              74
+4.2. Communication Protocol Example
+
+
+
+
+                           75
+
