@@ -44,6 +44,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         AnalyzeViewModule
         AppSettingsModule
         AutoPilotPluginsCommonModule
+        AvixGimbalModule
         FactControlsModule
         FactSystemModule
         FlightDisplayModule
@@ -76,6 +77,7 @@ add_subdirectory(AnalyzeView)
 add_subdirectory(Android)
 add_subdirectory(API)
 add_subdirectory(AutoPilotPlugins)
+add_subdirectory(AvixGimbal)
 add_subdirectory(Camera)
 add_subdirectory(Comms)
 add_subdirectory(FactSystem)

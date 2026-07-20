@@ -17,6 +17,7 @@ class ADSBVehicleManagerSettings;
 class APMMavlinkStreamRateSettings;
 class AppSettings;
 class AutoConnectSettings;
+class AvixGimbalSettings;
 class BatteryIndicatorSettings;
 class BrandImageSettings;
 class MavlinkActionsSettings;
@@ -49,6 +50,7 @@ class SettingsManager : public QObject
 #endif
     Q_MOC_INCLUDE("AppSettings.h")
     Q_MOC_INCLUDE("AutoConnectSettings.h")
+    Q_MOC_INCLUDE("AvixGimbalSettings.h")
     Q_MOC_INCLUDE("BatteryIndicatorSettings.h")
     Q_MOC_INCLUDE("BrandImageSettings.h")
     Q_MOC_INCLUDE("MavlinkActionsSettings.h")
@@ -74,6 +76,7 @@ class SettingsManager : public QObject
 #endif
     Q_PROPERTY(QObject *appSettings                     READ appSettings                    CONSTANT)
     Q_PROPERTY(QObject *autoConnectSettings             READ autoConnectSettings            CONSTANT)
+    Q_PROPERTY(QObject *avixGimbalSettings              READ avixGimbalSettings             CONSTANT)
     Q_PROPERTY(QObject *batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
     Q_PROPERTY(QObject *brandImageSettings              READ brandImageSettings             CONSTANT)
     Q_PROPERTY(QObject *mavlinkActionsSettings    READ mavlinkActionsSettings   CONSTANT)
@@ -108,6 +111,7 @@ public:
 #endif
     AppSettings *appSettings() const;
     AutoConnectSettings *autoConnectSettings() const;
+    AvixGimbalSettings *avixGimbalSettings() const;
     BatteryIndicatorSettings *batteryIndicatorSettings() const;
     BrandImageSettings *brandImageSettings() const;
     MavlinkActionsSettings *mavlinkActionsSettings() const;
@@ -135,6 +139,7 @@ private:
 #endif
     AppSettings *_appSettings = nullptr;
     AutoConnectSettings *_autoConnectSettings = nullptr;
+    AvixGimbalSettings *_avixGimbalSettings = nullptr;
     BatteryIndicatorSettings *_batteryIndicatorSettings = nullptr;
     BrandImageSettings *_brandImageSettings = nullptr;
     MavlinkActionsSettings *_mavlinkActionsSettings = nullptr;

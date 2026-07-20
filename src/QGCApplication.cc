@@ -37,6 +37,7 @@
 #include "QGCLogging.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
+#include "AvixGimbalController.h"
 #include "CmdLineOptParser.h"
 #include "ESP8266ComponentController.h"
 #include "FollowMe.h"
@@ -267,6 +268,7 @@ void QGCApplication::init()
 {
     SettingsManager::instance()->init();
 
+    AvixGimbalController::registerQmlTypes();
     LinkManager::registerQmlTypes();
     ParameterManager::registerQmlTypes();
     QGroundControlQmlGlobal::registerQmlTypes();

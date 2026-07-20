@@ -6,6 +6,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AppSettings.h
         AutoConnectSettings.cc
         AutoConnectSettings.h
+        AvixGimbalSettings.cc
+        AvixGimbalSettings.h
         BatteryIndicatorSettings.cc
         BatteryIndicatorSettings.h
         BrandImageSettings.cc

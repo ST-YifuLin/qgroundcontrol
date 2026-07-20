@@ -15,6 +15,7 @@
 #endif
 #include "AppSettings.h"
 #include "AutoConnectSettings.h"
+#include "AvixGimbalSettings.h"
 #include "BatteryIndicatorSettings.h"
 #include "BrandImageSettings.h"
 #include "MavlinkActionsSettings.h"
@@ -73,6 +74,7 @@ void SettingsManager::init()
 #endif
     _appSettings = new AppSettings(this);
     _autoConnectSettings = new AutoConnectSettings(this);
+    _avixGimbalSettings = new AvixGimbalSettings(this);
     _batteryIndicatorSettings = new BatteryIndicatorSettings(this);
     _brandImageSettings = new BrandImageSettings(this);
     _mavlinkActionsSettings = new MavlinkActionsSettings(this);
@@ -99,6 +101,7 @@ APMMavlinkStreamRateSettings *SettingsManager::apmMavlinkStreamRateSettings() co
 #endif
 AppSettings *SettingsManager::appSettings() const { return _appSettings; }
 AutoConnectSettings *SettingsManager::autoConnectSettings() const { return _autoConnectSettings; }
+AvixGimbalSettings *SettingsManager::avixGimbalSettings() const { return _avixGimbalSettings; }
 BatteryIndicatorSettings *SettingsManager::batteryIndicatorSettings() const { return _batteryIndicatorSettings; }
 BrandImageSettings *SettingsManager::brandImageSettings() const { return _brandImageSettings; }
 MavlinkActionsSettings *SettingsManager::mavlinkActionsSettings() const { return _mavlinkActionsSettings; }

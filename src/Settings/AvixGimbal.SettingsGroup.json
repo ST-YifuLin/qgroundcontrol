@@ -1,0 +1,15 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":              "ControlSource",
+    "shortDesc":         "Currently active control source for the AVIX gimbal",
+    "type":              "uint32",
+    "enumStrings":       "Native, MavlinkBridge",
+    "enumValues":        "0, 1",
+    "default":           0
+}
+]
+}

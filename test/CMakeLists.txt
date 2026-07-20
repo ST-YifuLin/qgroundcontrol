@@ -50,6 +50,9 @@ add_qgc_test(PX4LogParserTest)
 # add_subdirectory(AutoPilotPlugins)
 # add_qgc_test(RadioConfigTest)
 
+add_subdirectory(AvixGimbal)
+add_qgc_test(AvixGimbalProtocolTest)
+
 add_subdirectory(Camera)
 add_qgc_test(QGCCameraManagerTest)
 

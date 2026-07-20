@@ -27,6 +27,9 @@
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
 
+// AvixGimbal
+#include "AvixGimbalProtocolTest.h"
+
 // Camera
 #include "QGCCameraManagerTest.h"
 
@@ -131,6 +134,9 @@ int runTests(bool stress, QStringView unitTestOptions)
 
     // AutoPilotPlugins
     // UT_REGISTER_TEST(RadioConfigTest)
+
+    // AvixGimbal
+    UT_REGISTER_TEST(AvixGimbalProtocolTest)
 
     // Camera
     UT_REGISTER_TEST(QGCCameraManagerTest)
