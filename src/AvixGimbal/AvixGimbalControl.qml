@@ -26,9 +26,9 @@ Item {
     property bool _isActiveSource: AvixGimbalController.activeControlSource === AvixGimbalController.Native
     property bool _minimized:      false
 
-    property real _dpadButtonSize: ScreenTools.defaultFontPixelHeight * 1.8
-    property real _stopButtonSize: ScreenTools.defaultFontPixelHeight * 2.6
-    property real _dpadSpacing:    ScreenTools.defaultFontPixelHeight / 4
+    property real _dpadButtonSize: ScreenTools.defaultFontPixelHeight * 2.0
+    property real _stopButtonSize: ScreenTools.defaultFontPixelHeight * 2.4
+    property real _dpadSpacing:    ScreenTools.defaultFontPixelHeight / 6
 
     // AvixGimbalController 的 watchdog 逾時是 400ms（見 AvixGimbalController.h kWatchdogTimeoutMs），
     // 逾時未收新指令且上次非零速度就會自動送停止。方向鍵按住不放時，靠這個 timer 每 200ms 重送一次
@@ -65,20 +65,22 @@ Item {
         width:          panelLayout.implicitWidth + ScreenTools.defaultFontPixelWidth * 1
         height:         panelLayout.implicitHeight + ScreenTools.defaultFontPixelWidth * 1
         radius:         ScreenTools.defaultFontPixelWidth / 2
-        color:          "#F0F0F0" // 固定淡色底，確保在飛行畫面的深色地球底圖上仍清楚可見
-        opacity:        0.95
+        color:          "#80F0F0F0" // 半透明淡色底（ARGB，80≈50%不透明度）。用 color 的 alpha 通道而不是
+                                     // Rectangle.opacity，因為 opacity 會連裡面的按鈕/文字一起變透明，
+                                     // 這裡只要背景看得穿、按鈕文字要維持清楚可讀。
         enabled:        _root._isActiveSource
 
         ColumnLayout {
             id:                 panelLayout
             anchors.centerIn:   parent
-            spacing:            ScreenTools.defaultFontPixelHeight / 2
+            spacing:            ScreenTools.defaultFontPixelHeight / 4
 
             RowLayout {
                 Layout.fillWidth:   true
 
                 QGCLabel {
                     text:               qsTr("AVIX Gimbal")
+                    color:              "black"
                     Layout.fillWidth:   true
                 }
 
@@ -107,12 +109,37 @@ Item {
                     height:     width
                     pointSize:  ScreenTools.defaultFontPointSize
                     text:       qsTr("緊急\n停止")
+                    fontWeight: Font.Bold
+                    textColor:  stopButton.pressed ? "#FFFFFF" : "#D32F2F"   // 按下時背景變紅，文字改白色避免紅字疊紅底看不見
+                    // 覆寫掉 QGCButton 內建 padding（隨字級縮放，見 QGCButton.qml:37-38）。
+                    // 這顆按鈕被 _stopButtonSize 強制縮到比內建 padding 還小，不覆寫的話文字會被擠壓/溢出，
+                    // 詳細分析見 docs/avix-gimbal/QGC_AvixGimbal_UI設計預覽SOP_工作報告_2026-07-22.md。
+                    leftPadding:   0
+                    rightPadding:  0
+                    topPadding:    0
+                    bottomPadding: 0
                     onClicked:  AvixGimbalController.emergencyStop(AvixGimbalController.Native)
+
+                    // 按下整顆變紅，跟其他按鈕的一般 hover/按壓高亮區隔開，強調這是緊急停止。
+                    // 只在這顆按鈕覆寫 background，不動共用的 QGCButton.qml，代價是失去原本的
+                    // hover 高亮效果（見 docs/avix-gimbal/QGC_AvixGimbal_UI設計預覽SOP_工作報告_2026-07-22.md 第7節）。
+                    background: Rectangle {
+                        radius:       4
+                        color:        stopButton.pressed ? "#D32F2F" : "#FFFFFF"
+                        border.width: 1
+                        border.color: "#D32F2F"
+                    }
                 }
                 QGCButton {
                     text:                   "▲"
+                    pointSize:              ScreenTools.defaultFontPointSize * 1.2
+                    rotation:               0                       // 上：不轉
                     width:                  _root._dpadButtonSize
                     height:                 width
+                    leftPadding:            0
+                    rightPadding:           0
+                    topPadding:             0
+                    bottomPadding:          0
                     anchors.horizontalCenter: stopButton.horizontalCenter
                     anchors.bottom:         stopButton.top
                     anchors.bottomMargin:   _root._dpadSpacing
@@ -120,9 +147,15 @@ Item {
                     onReleased:             _root._stopVelocity()
                 }
                 QGCButton {
-                    text:                   "▼"
+                    text:                   "▲"
+                    pointSize:              ScreenTools.defaultFontPointSize * 1.2
+                    rotation:               180                     // 下：轉180度
                     width:                  _root._dpadButtonSize
                     height:                 width
+                    leftPadding:            0
+                    rightPadding:           0
+                    topPadding:             0
+                    bottomPadding:          0
                     anchors.horizontalCenter: stopButton.horizontalCenter
                     anchors.top:            stopButton.bottom
                     anchors.topMargin:      _root._dpadSpacing
@@ -130,9 +163,15 @@ Item {
                     onReleased:             _root._stopVelocity()
                 }
                 QGCButton {
-                    text:                   "◀"
+                    text:                   "▲"
+                    pointSize:              ScreenTools.defaultFontPointSize * 1.2
+                    rotation:               270                     // 左：轉270度
                     width:                  _root._dpadButtonSize
                     height:                 width
+                    leftPadding:            0
+                    rightPadding:           0
+                    topPadding:             0
+                    bottomPadding:          0
                     anchors.verticalCenter: stopButton.verticalCenter
                     anchors.right:          stopButton.left
                     anchors.rightMargin:    _root._dpadSpacing
@@ -140,9 +179,15 @@ Item {
                     onReleased:             _root._stopVelocity()
                 }
                 QGCButton {
-                    text:                   "▶"
+                    text:                   "▲"
+                    pointSize:              ScreenTools.defaultFontPointSize * 1.2
+                    rotation:               90                      // 右：轉90度
                     width:                  _root._dpadButtonSize
                     height:                 width
+                    leftPadding:            0
+                    rightPadding:           0
+                    topPadding:             0
+                    bottomPadding:          0
                     anchors.verticalCenter: stopButton.verticalCenter
                     anchors.left:           stopButton.right
                     anchors.leftMargin:     _root._dpadSpacing
@@ -153,10 +198,13 @@ Item {
 
             // 角度模式（0x33）：回到中心角度，Yaw=0/Pitch=0
             QGCButton {
-                text:               qsTr("Center")
-                Layout.alignment:   Qt.AlignHCenter
-                Layout.fillWidth:   true
-                onClicked:          AvixGimbalController.setAngle(AvixGimbalController.Native, 0, 0)
+                text:                   qsTr("Center")
+                Layout.alignment:       Qt.AlignHCenter
+                Layout.fillWidth:       true
+                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.3
+                topPadding:             0   // 同 d-pad 按鈕的 padding 擠壓問題，覆寫成0讓文字能真正上下置中
+                bottomPadding:          0
+                onClicked:              AvixGimbalController.setAngle(AvixGimbalController.Native, 0, 0)
             }
 
             // 可見光鏡頭縮放（0x3A Mode=0）
@@ -165,14 +213,20 @@ Item {
                 spacing:            ScreenTools.defaultFontPixelWidth / 2
 
                 QGCButton {
-                    text:       qsTr("Zoom -")
-                    onPressed:  AvixGimbalController.setZoom(AvixGimbalController.Native, -1)
-                    onReleased: AvixGimbalController.setZoom(AvixGimbalController.Native, 0)
+                    text:                   qsTr("Zoom -")
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.3
+                    topPadding:             0
+                    bottomPadding:          0
+                    onPressed:              AvixGimbalController.setZoom(AvixGimbalController.Native, -1)
+                    onReleased:             AvixGimbalController.setZoom(AvixGimbalController.Native, 0)
                 }
                 QGCButton {
-                    text:       qsTr("Zoom +")
-                    onPressed:  AvixGimbalController.setZoom(AvixGimbalController.Native, 1)
-                    onReleased: AvixGimbalController.setZoom(AvixGimbalController.Native, 0)
+                    text:                   qsTr("Zoom +")
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.3
+                    topPadding:             0
+                    bottomPadding:          0
+                    onPressed:              AvixGimbalController.setZoom(AvixGimbalController.Native, 1)
+                    onReleased:             AvixGimbalController.setZoom(AvixGimbalController.Native, 0)
                 }
             }
         }
@@ -187,7 +241,7 @@ Item {
         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 3
         width:          ScreenTools.defaultFontPixelHeight * 2.2
         height:         width
-        text:           qsTr("AVIX")
+        text:           qsTr("G")
         onClicked:      _root._minimized = false
     }
 }
