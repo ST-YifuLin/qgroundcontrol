@@ -7,40 +7,13 @@
 
 ## 1. 軟體拓樸
 
-```mermaid
-graph TD
-    subgraph "QGC App (existing)"
-        QGCApp["QGCApplication::init()"]
-        SettingsManager["SettingsManager (singleton)"]
-        FlyViewVideo["FlyViewVideo.qml"]
-    end
+新增的 `src/AvixGimbal/` 模組是一條獨立於既有 MAVLink 體系的路徑：
 
-    subgraph "AvixGimbal module (new, src/AvixGimbal/)"
-        Controller["AvixGimbalController<br/>(Q_APPLICATION_STATIC singleton)"]
-        Link["AvixGimbalLink<br/>(QTcpSocket wrapper)"]
-        Protocol["AvixGimbalProtocol<br/>(encode/decode, no I/O)"]
-        QML["AvixGimbalControl.qml<br/>(D-pad / 緊急停止 / Center / Zoom)"]
-    end
-
-    subgraph "Settings (new files under src/Settings/)"
-        AvixSettings["AvixGimbalSettings<br/>(ControlSource Fact)"]
-    end
-
-    subgraph "外部裝置"
-        Gimbal["AVIX 雲台<br/>192.168.144.200:2000 (TCP)"]
-        Camera["相機<br/>192.168.144.108:554 RTSP<br/>192.168.144.108:80 CGI（未實作）"]
-    end
-
-    QGCApp -->|registerQmlTypes| Controller
-    FlyViewVideo -->|掛載| QML
-    QML -->|Q_INVOKABLE| Controller
-    Controller --> Link
-    Link --> Protocol
-    Link <-->|TCP Port 2000| Gimbal
-    Controller --> AvixSettings
-    AvixSettings --> SettingsManager
-    FlyViewVideo -.->|既有功能，未改動| Camera
-```
+- `AvixGimbalController`（`Q_APPLICATION_STATIC` singleton，App 生命週期，不掛在任何 `Vehicle` 底下）在 `QGCApplication::init()` 註冊給 QML 使用
+- `AvixGimbalControl.qml` 面板掛在既有 `FlyViewVideo.qml`，透過 `Q_INVOKABLE` 呼叫 `AvixGimbalController`
+- `AvixGimbalController` 持有 `AvixGimbalLink`（`QTcpSocket`，接 `192.168.144.200:2000`），`AvixGimbalLink` 用 `AvixGimbalProtocol`（純 encode/decode，不做 I/O）組封包
+- 目前的 `ControlSource` 設定（`Native`/`MavlinkBridge`）存成 `AvixGimbalSettings` 底下的 Fact，走既有 `SettingsManager` 機制持久化
+- 相機影像/CGI（`192.168.144.108`，RTSP + Port 80）沿用 QGC 既有功能，這次完全沒有動到
 
 **關鍵設計決策：**
 
@@ -50,6 +23,20 @@ graph TD
 | 定位 | 不是 `Vehicle` 的一部分 | 雲台走獨立 TCP 協定、不講 MAVLink，跟任何飛控連線狀態無關 |
 | 控制來源仲裁 | `ControlSource` enum（Native / MavlinkBridge） | 預留未來 MAVLink shim 介面，MVP 只實作 Native |
 | Watchdog | Velocity 模式 400ms 逾時自動送停止 | 防止控制端斷線/當掉時雲台持續轉動 |
+
+**深度整合 vs. 獨立模組（Plugin）方式比較：**
+
+這次整個 AVIX 雲台邏輯關在 `src/AvixGimbal/` 一個目錄裡，跟既有程式碼的接觸點壓到最低（只有幾行註冊/掛載），性質上比較接近「外掛」而非「深度整合」。兩種路線的取捨：
+
+| 面向 | 深度整合（併入既有 Vehicle/FactSystem/Joystick） | 獨立模組（目前採用的 Plugin 方式） |
+|---|---|---|
+| 開發風險 | 高——直接改動既有 `GimbalController`/`Camera`/`Joystick` 等核心程式碼，容易引入回歸問題 | 低——新程式碼關在 `src/AvixGimbal/`，既有邏輯完全不動 |
+| 與上游 QGC 同步 | 難——改動點分散在多個既有檔案，之後跟上游版本 merge 容易衝突 | 易——只有少數幾行單行註冊，衝突面很小 |
+| 單元測試 | 難——邏輯跟 `Vehicle`/MAVLink 生命週期綁在一起，測試需要建構完整或模擬的 Vehicle 環境 | 易——Protocol/Link/Controller 三層可各自獨立測試，不需要真的接 Vehicle |
+| 即時狀態呈現 | 有優勢——可直接沿用 `FactSystem`/`Vehicle` 既有的即時資料顯示框架 | 目前沒有——`0xF0` 狀態資料收到後沒有現成管道顯示，需要另外搭一套小型呈現機制 |
+| 搖桿/任務規劃整合 | 有優勢——原生銜接既有 `Joystick`、`MissionManager` ROI 指令等既有功能 | 做不到——要接這些就必須跨出目前的模組邊界，屆時「隔離」會被打破 |
+| UI 一致性/使用者感受 | 較一致——可以直接融入既有相機/雲台面板的操作邏輯與外觀 | 目前是獨立浮動面板，跟既有 UI 是兩套視覺語言 |
+| 未來 MAVLink shim 擴充性 | 較差——邏輯若跟既有 MAVLink 體系深度綁定，之後要抽出獨立協定反而更難 | 較好——`ControlSource` 介面已經預留，之後加 shim 不需重構核心邏輯 |
 
 ---
 
@@ -90,17 +77,11 @@ test/AvixGimbal/
 
 ---
 
-## 3. 文件缺漏：Protocol Version（實機除錯過程中發現的最大落差）
+## 3. 文件缺漏：Protocol Version
 
-原廠 ICD 文件（`gimbal_icd.txt`）對封包格式第 2 個 byte「Protocol Version」**只有欄位名稱，沒有定義實際數值**——原因是 ICD 原文 1.1.1 節與 4.2 節的「封包範例圖」是純截圖，沒有被轉成文字（PDF 轉文字擷取時遺漏）。
+原廠 ICD（`gimbal_icd.txt`）對封包第 2 個 byte「Protocol Version」只有欄位名稱、沒有定義數值（原文封包範例圖是截圖，未轉成文字）。一開始假設 `0x00`，導致雲台完全靜默忽略所有 FR-2/FR-3 指令，連線與 checksum 都正常但雲台毫無反應。
 
-**造成的實際影響**：一開始假設這個欄位是 `0x00`，導致雲台**完全靜默忽略**我們送出的所有 FR-2/FR-3 指令——TCP 連線正常建立、checksum 也算得完全正確，但雲台端就是沒有任何反應，除錯過程中一度懷疑是連線層、checksum 範圍、甚至 ICD 提到的「Hand-Shaking required」是不是代表還需要額外的應用層交握。
-
-**如何定位到問題**：用 Wireshark 直接抓封包分析——雲台自己主動送出的 `0xF0 Gimbal Status Return` 狀態封包，逐 byte 解出來後發現它自己用的 Protocol Version 是 `0x01`，改成這個值之後，雲台立刻正常回應移動與縮放指令。
-
-**這件事的教訓**：ICD 文件本身有結構性缺漏（圖片內容未文字化），單靠讀文件無法補完，必須靠實機抓包反推。目前 `AvixGimbalProtocol.cc` 裡這個值已經改成 `0x01`，但**這仍然是從雲台單方面的封包觀察反推出來的，不是原廠白紙黑字確認過的規格**——如果雲台韌體之後更新，這個假設可能需要重新驗證。
-
-**同一輪除錯順便確認的另一個假設**：Checksum 涵蓋範圍（是否含 `0xAB 0xCD` 兩個 sync byte）——已用同一份抓到的封包驗證，範圍是從 offset 0（含 sync byte）累加到 Data 結尾，跟我們的實作一致，這個假設是對的。
+用 Wireshark 抓雲台自己送出的 `0xF0` 狀態封包逐 byte 反推，確認實際值是 `0x01`，改掉後雲台立即正常回應。**這個值是從雲台單方面封包觀察反推，非原廠書面確認**，韌體更新後可能需要重新驗證。同一輪也順便確認了 checksum 涵蓋範圍（含 sync byte）與我們的實作一致。
 
 ---
 
@@ -125,18 +106,8 @@ test/AvixGimbal/
 
 ## 5. 代辦事項
 
-1. **跟隨機頭開關按鈕**（本次新增，見 CLAUDE.md 第7節）——動工前需先確認：目前沒有 UART/`0x60` 姿態橋接，雲台即使開啟跟隨機頭也收不到真實航向，功能上可能無法正常運作。**懷疑這也是「雲台在靜止平台上會自己飄動」的根本原因**——需要先解析 `0xF0` 的 DataFlag bit4（PTZ 模式）確認雲台目前是不是真的處在跟隨機頭模式。
-2. 解析並利用 `0xF0` 狀態封包內容（尤其 DataFlag），用於上述診斷、也可以顯示在 UI 上讓使用者看到雲台目前實際姿態/焦段。
-3. 待確認事項 #1（TCP 長時間連線穩定性/keep-alive）、#2（Sequence/0x01 ACK 配對機制）尚未解，目前只有基本重連 timer，長時間穩定性未經驗證。
-4. FR-4（CGI 畫質設定）開工前需先解待確認事項 #4（`SetMultimedia.cgi` 的 Admin 認證是否與 RTSP 帳密共用）。
-5. `custom/` 客製化建置架構、換品牌圖示、Android 版本——使用者已提出，優先度較低，待雲台核心功能（FR-2/FR-3 穩定性、跟隨機頭問題）處理完再排入。
-
----
-
-## 附錄：已解決的問題（本輪除錯成果，避免重工）
-
-- ✅ Checksum 涵蓋範圍：含 sync byte，從 offset 0 累加
-- ✅ Protocol Version：`0x01`（非原假設的 `0x00`）
-- ✅ `AvixGimbalLink` 解構順序 bug：`_socket` 解構時觸發 `disconnected` signal 重入已解構的 `_reconnectTimer`，造成 `0xC0000005` crash——已在解構函式明確 `_socket.disconnect(this)` 修正
-- ✅ QML watchdog 交互 bug：D-pad 按住不放時因為沒有持續重送指令，被 400ms watchdog 誤判斷線自動停止——已加 200ms 重送 timer 修正
-- ✅ QML z-order bug：面板一開始被下層的 `flyViewVideoMouseArea`（全螢幕 MouseArea）攔截點擊，加 `z: 1` 修正
+1. 確認 gimbal 待補功能（第4節列出的缺口，逐項確認優先順序，尤其跟隨機頭與 `0xF0` 狀態資料利用）
+2. QGC 架構變更：`custom/` 客製化建置架構
+3. 換品牌圖示
+4. Android 版本（AirLink 3）
+5. 用 Qt Designer 將操控介面優化

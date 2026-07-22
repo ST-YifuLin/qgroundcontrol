@@ -14,8 +14,6 @@ import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
 
-import AvixGimbal
-
 Item {
     id: _root
 
@@ -97,11 +95,6 @@ Item {
         screenX:                 flyViewVideoMouseArea.mouseX
         screenY:                 flyViewVideoMouseArea.mouseY
         cameraTrackingEnabled:   videoStreaming._camera && videoStreaming._camera.trackingEnabled
-    }
-
-    AvixGimbalControl {
-        anchors.fill:            parent
-        z:                       1 // 必須蓋過下面 flyViewVideoMouseArea 的 anchors.fill，否則面板按鈕的點擊會被那個全螢幕 MouseArea 攔截
     }
 
     MouseArea {

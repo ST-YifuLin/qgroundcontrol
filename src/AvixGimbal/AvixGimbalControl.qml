@@ -62,11 +62,11 @@ Item {
         anchors.leftMargin:   ScreenTools.defaultFontPixelWidth
         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 3 // 避開 QGC 地圖介面本身的縮放按鈕
         visible:        !_root._minimized
-        width:          panelLayout.implicitWidth + ScreenTools.defaultFontPixelWidth * 2
-        height:         panelLayout.implicitHeight + ScreenTools.defaultFontPixelWidth * 2
+        width:          panelLayout.implicitWidth + ScreenTools.defaultFontPixelWidth * 1
+        height:         panelLayout.implicitHeight + ScreenTools.defaultFontPixelWidth * 1
         radius:         ScreenTools.defaultFontPixelWidth / 2
-        color:          QGroundControl.globalPalette.window
-        opacity:        0.75
+        color:          "#F0F0F0" // 固定淡色底，確保在飛行畫面的深色地球底圖上仍清楚可見
+        opacity:        0.95
         enabled:        _root._isActiveSource
 
         ColumnLayout {

@@ -30,6 +30,8 @@ import QGroundControl.Vehicle
 // 3D Viewer modules
 import Viewer3D
 
+import AvixGimbal
+
 Item {
     id: _root
 
@@ -121,6 +123,13 @@ Item {
 
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+        }
+
+        // 跟 FlyViewMap/FlyViewVideo 平級掛載，不管地圖或影像哪個是 PIP 主畫面都固定顯示
+        // （若掛在 FlyViewVideo 裡面，地圖變成主畫面時 FlyViewVideo 會縮成小縮圖，面板也會跟著被壓縮）
+        AvixGimbalControl {
+            anchors.fill:   parent
+            z:              QGroundControl.zOrderWidgets + 1
         }
 
         FlyViewWidgetLayer {
